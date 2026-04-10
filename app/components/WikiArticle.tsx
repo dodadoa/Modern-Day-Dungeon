@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { GraphNode, NODES, LINKS } from '../data/graph';
 
 interface Props {
@@ -39,7 +40,55 @@ const LINK_LABELS: Record<string, string> = {
   inhabits: 'inhabits',
 };
 
+const DIAGRAM_INNER = 30;
+
+function sectorEdgeStats(nodeIds: string[]) {
+  const set = new Set(nodeIds);
+  let internal = 0;
+  let external = 0;
+  LINKS.forEach(l => {
+    const a = set.has(l.s);
+    const b = set.has(l.t);
+    if (a && b) internal++;
+    else if (a || b) external++;
+  });
+  return { internal, external };
+}
+
+function buildSectorDiagramText(
+  type: string,
+  nodes: GraphNode[],
+): string {
+  const code = TYPE_CODES[type] || '[?]';
+  const label = (TYPE_LABELS[type] || type).toUpperCase();
+  const ids = nodes.map(n => n.id);
+  const { internal, external } = sectorEdgeStats(ids);
+  const bar = '─'.repeat(DIAGRAM_INNER + 2);
+  const row = (text: string) => {
+    const t = text.length > DIAGRAM_INNER ? `${text.slice(0, DIAGRAM_INNER - 1)}…` : text;
+    return `│ ${t.padEnd(DIAGRAM_INNER)} │`;
+  };
+  const lines: string[] = [
+    `┌${bar}┐`,
+    row(`◈ SECTOR  ${code}  ${label}`),
+    row(`  NODES .. ${String(nodes.length).padStart(2, '0')}`),
+    row(`  LINKS .. int ${String(internal).padStart(2, '0')} / ext ${String(external).padStart(2, '0')}`),
+    `├${bar}┤`,
+    row('  ROUTING MAP (preview)'),
+  ];
+  nodes.slice(0, 4).forEach(n => {
+    lines.push(row(`    ├─● ${n.label}`));
+  });
+  if (nodes.length > 4) {
+    lines.push(row(`    └─· +${nodes.length - 4} further`));
+  }
+  lines.push(`└${bar}┘`);
+  return lines.join('\n');
+}
+
 export default function WikiArticle({ node, onNodeSelect }: Props) {
+  const [expandedStackType, setExpandedStackType] = useState<string | null>(null);
+
   if (!node) {
     const nodesByType: Record<string, GraphNode[]> = {};
     NODES.forEach(n => {
@@ -48,7 +97,7 @@ export default function WikiArticle({ node, onNodeSelect }: Props) {
     });
 
     return (
-      <div className="wiki-home">
+      <div className="wiki-home wiki-home--centered">
 
         <div className="wiki-home-header">
           <div className="wiki-home-symbol">◈</div>
@@ -68,27 +117,72 @@ export default function WikiArticle({ node, onNodeSelect }: Props) {
           <span className="wiki-home-stat wiki-home-stat--status">▸ STATUS: ACTIVE</span>
         </div>
 
-        <div className="wiki-categories">
-          {Object.entries(nodesByType).map(([type, nodes]) => (
-            <div key={type} className="wiki-category-card">
-              <div className="wiki-cat-header">
-                <span className="wiki-cat-code">{TYPE_CODES[type]}</span>
-                <span className="wiki-cat-name">{TYPE_LABELS[type] || type}</span>
-                <span className="wiki-cat-count">x{nodes.length}</span>
+        <div className="wiki-stack-menu" role="navigation" aria-label="Entity sectors">
+          {Object.entries(nodesByType).map(([type, sectorNodes]) => {
+            const expanded = expandedStackType === type;
+            const panelId = `wiki-stack-panel-${type}`;
+            return (
+              <div
+                key={type}
+                className={`wiki-stack-block${expanded ? ' is-expanded' : ''}`}
+              >
+                <button
+                  type="button"
+                  className="wiki-stack-plate"
+                  aria-expanded={expanded}
+                  aria-controls={panelId}
+                  id={`wiki-stack-trigger-${type}`}
+                  onClick={() =>
+                    setExpandedStackType(prev => (prev === type ? null : type))
+                  }
+                >
+                  <span className="wiki-stack-bracket wiki-stack-bracket--l" aria-hidden>╱</span>
+                  <span className="wiki-stack-code">{TYPE_CODES[type]}</span>
+                  <span className="wiki-stack-name">{TYPE_LABELS[type] || type}</span>
+                  <span className="wiki-stack-count">{String(sectorNodes.length).padStart(2, '0')}</span>
+                  <span className="wiki-stack-toggle" aria-hidden>
+                    {expanded ? '[ collapse ]' : '[ expand ]'}
+                  </span>
+                  <span className="wiki-stack-bracket wiki-stack-bracket--r" aria-hidden>╲</span>
+                </button>
+
+                <div
+                  id={panelId}
+                  className="wiki-stack-collapse"
+                  aria-hidden={!expanded}
+                >
+                  {expanded ? (
+                    <div
+                      className="wiki-stack-collapse-inner"
+                      role="region"
+                      aria-labelledby={`wiki-stack-trigger-${type}`}
+                    >
+                      <div className="wiki-stack-diagram">
+                        <div className="wiki-stack-diagram-glow" />
+                        <pre className="wiki-stack-diagram-pre">{buildSectorDiagramText(type, sectorNodes)}</pre>
+                        <div className="wiki-stack-diagram-actions">
+                          {sectorNodes.map(n => (
+                            <button
+                              key={n.id}
+                              type="button"
+                              className="wiki-stack-entity-btn"
+                              onClick={e => {
+                                e.stopPropagation();
+                                onNodeSelect(n);
+                              }}
+                            >
+                              <span className="wiki-stack-entity-code">{TYPE_CODES[n.type]}</span>
+                              {n.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
-              <div className="wiki-cat-nodes">
-                {nodes.map(n => (
-                  <button
-                    key={n.id}
-                    className="wiki-cat-node"
-                    onClick={() => onNodeSelect(n)}
-                  >
-                    {n.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

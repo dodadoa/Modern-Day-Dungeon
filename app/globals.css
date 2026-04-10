@@ -4,8 +4,9 @@
 
 body {
   background: #000;
-  color: #ddd;
+  color: #f0f0f0;
   font-family: 'Share Tech Mono', monospace;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
   overflow: hidden;
   width: 100vw;
   height: 100vh;
@@ -21,17 +22,55 @@ body {
   --font-scale: 1;
 }
 
+/* Theme switch: keep dark as default and invert for white mode */
+.wiki-layout.theme-light {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* Top bar */
 .wiki-topbar {
   height: 44px;
   flex-shrink: 0;
   background: #000;
   border-bottom: 1px solid #444;
+  display: grid;
+  grid-template-columns: minmax(40px, 1fr) minmax(0, 2.2fr) minmax(40px, 1fr);
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  z-index: 300;
+}
+
+.wiki-topbar-side {
   display: flex;
   align-items: center;
-  padding: 0 14px;
-  gap: 10px;
-  z-index: 300;
+  gap: 8px;
+  min-width: 0;
+}
+.wiki-topbar-side--left {
+  justify-content: flex-start;
+}
+.wiki-topbar-side--right {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.wiki-topbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  text-align: center;
+}
+
+.wiki-logo-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
 }
 
 .wiki-menu-btn {
@@ -69,10 +108,11 @@ body {
 
 .wiki-topbar-crumb {
   font-size: 10px;
-  margin-left: 6px;
+  margin-left: 0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 .wiki-topbar-type {
   letter-spacing: 0.15em;
@@ -81,7 +121,9 @@ body {
 }
 .wiki-topbar-label { color: #bbb; }
 
-.wiki-font-controls { margin-left: auto; }
+.wiki-topbar-side--right .wiki-font-controls {
+  margin-left: 0;
+}
 
 .wiki-graph-btn {
   background: none;
@@ -139,6 +181,22 @@ body {
 .wiki-font-btn:disabled { color: #444; border-color: #333; cursor: default; }
 .wiki-font-btn--dec { font-size: 11px; }
 .wiki-font-btn--inc { font-size: 13px; }
+
+.wiki-theme-btn {
+  background: none;
+  border: 1px solid #555;
+  color: #999;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  padding: 3px 8px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  border-radius: 0;
+  text-transform: uppercase;
+  transition: all 0.1s;
+}
+.wiki-theme-btn:hover { color: #fff; border-color: #aaa; }
+.wiki-theme-btn.active { color: #fff; border-color: #fff; background: rgba(255,255,255,0.08); }
 
 /* Body row */
 .wiki-body {
@@ -230,6 +288,11 @@ body {
   min-width: 0;
   background: #000;
 }
+.wiki-main:not(.wiki-main--graph) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 .wiki-main--graph {
   overflow: hidden;
 }
@@ -242,12 +305,21 @@ body {
 .wiki-home {
   padding: 44px 52px;
   max-width: 900px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.wiki-home--centered {
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 /* ─── Wiki Home Header ─────────────────────────────── */
 
 .wiki-home-header {
   margin-bottom: 28px;
+  text-align: center;
 }
 
 .wiki-home-symbol {
@@ -291,11 +363,14 @@ body {
 .wiki-home-stats {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 36px;
   padding: 10px 14px;
   border: 1px solid #333;
   border-left: 2px solid #666;
+  text-align: center;
 }
 
 .wiki-home-stat {
@@ -385,16 +460,217 @@ body {
 .wiki-cat-node:hover { color: #fff; }
 .wiki-cat-node:hover::before { color: #bbb; }
 
+/* ─── Stack menu (home) — cyberpunk sector plates ─────── */
+
+.wiki-stack-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+.wiki-stack-block {
+  position: relative;
+  text-align: left;
+}
+
+.wiki-stack-plate {
+  display: grid;
+  grid-template-columns: 16px auto minmax(0, 1fr) 2.2rem minmax(0, auto) 16px;
+  align-items: center;
+  column-gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #555;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: pointer;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  transition: border-color 0.22s ease, box-shadow 0.28s ease, transform 0.2s ease;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 4px 24px rgba(0, 0, 0, 0.5);
+}
+.wiki-stack-plate:focus-visible {
+  outline: 1px solid #8af;
+  outline-offset: 2px;
+}
+
+.wiki-stack-bracket {
+  font-size: 14px;
+  color: #666;
+  opacity: 0.9;
+  transition: color 0.2s;
+}
+.wiki-stack-code {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #888;
+}
+.wiki-stack-name {
+  flex: 1;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #ccc;
+  text-align: center;
+}
+.wiki-stack-count {
+  font-size: 11px;
+  color: #fff;
+  letter-spacing: 0.08em;
+  min-width: 1.5em;
+  text-align: right;
+  text-shadow: 0 0 8px rgba(0, 255, 200, 0.25);
+}
+
+.wiki-stack-toggle {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: #777;
+  white-space: nowrap;
+  text-align: right;
+  transition: color 0.2s ease;
+}
+
+.wiki-stack-block.is-expanded .wiki-stack-toggle {
+  color: #9cf;
+}
+
+/* No hover “preview” — only expanded (clicked) state accents the plate */
+.wiki-stack-block.is-expanded .wiki-stack-plate {
+  border-color: #8af;
+  box-shadow:
+    inset 0 0 20px rgba(100, 200, 255, 0.06),
+    0 0 20px rgba(80, 160, 255, 0.12),
+    0 4px 28px rgba(0, 0, 0, 0.6);
+  transform: translateY(-1px);
+}
+.wiki-stack-block.is-expanded .wiki-stack-bracket {
+  color: #9cf;
+}
+
+.wiki-stack-collapse {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.wiki-stack-collapse-inner {
+  animation: wiki-stack-expand-in 0.34s ease-out;
+}
+
+@keyframes wiki-stack-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wiki-stack-diagram {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin: 8px auto 0;
+  z-index: 2;
+  padding: 14px 14px 12px;
+  border: 1px solid #666;
+  background: rgba(4, 8, 12, 0.96);
+  box-shadow:
+    0 0 0 1px rgba(0, 255, 200, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.75);
+}
+
+.wiki-stack-diagram-glow {
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 200, 0.08) 0%,
+    transparent 45%,
+    rgba(120, 180, 255, 0.06) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wiki-stack-diagram-pre {
+  position: relative;
+  z-index: 1;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  line-height: 1.35;
+  color: #9dffc8;
+  text-shadow: 0 0 6px rgba(0, 255, 200, 0.35);
+  margin: 0 0 12px;
+  white-space: pre;
+  overflow-x: auto;
+  text-align: left;
+}
+
+.wiki-stack-diagram-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  padding-top: 10px;
+}
+.wiki-stack-diagram-actions::-webkit-scrollbar { width: 3px; }
+.wiki-stack-diagram-actions::-webkit-scrollbar-thumb { background: #444; }
+
+.wiki-stack-entity-btn {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.5);
+  color: #bbb;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: calc(11px * var(--font-scale));
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.wiki-stack-entity-btn:hover {
+  border-color: #6a9;
+  color: #fff;
+  background: rgba(0, 80, 60, 0.2);
+}
+.wiki-stack-entity-code {
+  font-size: 9px;
+  color: #666;
+  flex-shrink: 0;
+}
+
 /* ─── Wiki Article ─────────────────────────────────────── */
 
 .wiki-article {
   padding: 44px 52px;
   max-width: 760px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .wiki-breadcrumb {
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 6px;
   font-size: 9px;
   margin-bottom: 32px;
@@ -454,6 +730,8 @@ body {
   color: #ddd;
   line-height: 1.85;
   max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
   padding-top: 20px;
 }
 
@@ -474,6 +752,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
 }
 .wiki-conn-row {
   display: grid;
