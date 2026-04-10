@@ -1,65 +1,156 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import WikiArticle from './components/WikiArticle';
+import { GraphNode, NODES } from './data/graph';
+
+const KnowledgeGraph = dynamic(() => import('./components/KnowledgeGraph'), { ssr: false });
+
+type MainView = 'home' | 'article' | 'graph';
+
+const TYPE_LABELS: Record<string, string> = {
+  realm:     'Realm',
+  faction:   'Faction',
+  outer:     'Outer God',
+  lore:      'Lore / Concept',
+  danger:    'Danger / Unknown',
+  mechanism: 'Mechanism',
+  creature:  'Creature',
+};
+
+const TYPE_CODES: Record<string, string> = {
+  realm:     '[R]',
+  faction:   '[F]',
+  outer:     '[O]',
+  lore:      '[L]',
+  danger:    '[!]',
+  mechanism: '[M]',
+  creature:  '[C]',
+};
+
+const FONT_SCALES = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35];
+const DEFAULT_FONT_IDX = 3;
+
+export default function Page() {
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [mainView, setMainView] = useState<MainView>('home');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [fontIdx, setFontIdx] = useState(DEFAULT_FONT_IDX);
+
+  const nodesByType: Record<string, GraphNode[]> = {};
+  NODES.forEach(n => {
+    if (!nodesByType[n.type]) nodesByType[n.type] = [];
+    nodesByType[n.type].push(n);
+  });
+
+  const handleNodeSelect = (node: GraphNode | null) => {
+    setSelectedNode(node);
+    setMainView(node ? 'article' : 'home');
+  };
+
+  const handleHome = () => {
+    setSelectedNode(null);
+    setMainView('home');
+  };
+
+  const handleGraph = () => {
+    setMainView('graph');
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="wiki-layout" style={{ '--font-scale': FONT_SCALES[fontIdx] } as React.CSSProperties}>
+
+      {/* Top bar */}
+      <header className="wiki-topbar">
+        <button
+          className="wiki-menu-btn"
+          onClick={() => setSidebarOpen(v => !v)}
+          title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
+        >
+          ☰
+        </button>
+
+        <div className="wiki-logo">
+          <span className="wiki-logo-mdd">MDD</span>
+          <span className="wiki-logo-sep">//</span>
+          <span className="wiki-logo-name">Knowledge Base</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {mainView === 'article' && selectedNode && (
+          <div className="wiki-topbar-crumb">
+            <span className="wiki-topbar-type">
+              {TYPE_CODES[selectedNode.type]}
+            </span>
+            <span className="wiki-topbar-label"> {selectedNode.label}</span>
+          </div>
+        )}
+
+        <div className="wiki-font-controls">
+          <button
+            className="wiki-font-btn wiki-font-btn--dec"
+            onClick={() => setFontIdx(i => Math.max(0, i - 1))}
+            disabled={fontIdx === 0}
+            title="Decrease font size"
+          >A−</button>
+          <button
+            className="wiki-font-btn wiki-font-btn--inc"
+            onClick={() => setFontIdx(i => Math.min(FONT_SCALES.length - 1, i + 1))}
+            disabled={fontIdx === FONT_SCALES.length - 1}
+            title="Increase font size"
+          >A+</button>
         </div>
-      </main>
+
+        <button
+          className={`wiki-graph-btn${mainView === 'graph' ? ' active' : ''}`}
+          onClick={handleGraph}
+        >
+          [graph]
+        </button>
+
+        <button className="wiki-home-btn" onClick={handleHome}>
+          [index]
+        </button>
+      </header>
+
+      <div className="wiki-body">
+
+        {/* Left sidebar — always shows the node index */}
+        {sidebarOpen && (
+          <aside className="wiki-sidebar">
+            <div className="sidebar-label">◈ index</div>
+            <div className="node-index">
+              {Object.entries(nodesByType).map(([type, nodes]) => (
+                <div key={type} className="idx-section">
+                  <div className="idx-section-title">
+                    {TYPE_CODES[type]} {TYPE_LABELS[type] || type}
+                  </div>
+                  {nodes.map(n => (
+                    <button
+                      key={n.id}
+                      className={`idx-node${selectedNode?.id === n.id && mainView === 'article' ? ' active' : ''}`}
+                      onClick={() => handleNodeSelect(n)}
+                    >
+                      <span className="idx-type-code">{TYPE_CODES[n.type]}</span>
+                      {n.label}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </aside>
+        )}
+
+        {/* Main content area */}
+        <main className={`wiki-main${mainView === 'graph' ? ' wiki-main--graph' : ''}`}>
+          {mainView === 'graph' ? (
+            <KnowledgeGraph onNodeSelect={handleNodeSelect} />
+          ) : (
+            <WikiArticle node={selectedNode} onNodeSelect={handleNodeSelect} />
+          )}
+        </main>
+
+      </div>
     </div>
   );
 }
