@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import WikiArticle from './components/WikiArticle';
 import { GraphNode, NODES } from './data/graph';
+import { syncBloomEdgeShine, CURSOR_BLOOM_SHINE_CLASS } from './lib/cursorBloomShine';
 
 const KnowledgeGraph = dynamic(() => import('./components/KnowledgeGraph'), { ssr: false });
 
@@ -40,6 +41,60 @@ export default function Page() {
   const [fontIdx, setFontIdx] = useState(DEFAULT_FONT_IDX);
   const [theme, setTheme] = useState<ThemeMode>('dark');
 
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const bloomShineTargetsRef = useRef(new Set<Element>());
+  const mainViewRef = useRef<MainView>(mainView);
+  const selectedNodeRef = useRef<GraphNode | null>(selectedNode);
+
+  useEffect(() => {
+    mainViewRef.current = mainView;
+    selectedNodeRef.current = selectedNode;
+    /* Realm stack (edge reflect) only on index — clear when leaving. */
+    if (mainView === 'graph' || selectedNode !== null) {
+      bloomShineTargetsRef.current.forEach(el => el.classList.remove(CURSOR_BLOOM_SHINE_CLASS));
+      bloomShineTargetsRef.current.clear();
+    }
+  }, [mainView, selectedNode]);
+
+  useEffect(() => {
+    let raf = 0;
+    const pending = { x: 0, y: 0 };
+    const shineTargets = bloomShineTargetsRef.current;
+
+    const flushShine = () => {
+      raf = 0;
+      const layout = layoutRef.current;
+      if (!layout) return;
+      /* Graph: skip elementsFromPoint. Article: no realm stack mounted. */
+      if (mainViewRef.current === 'graph' || selectedNodeRef.current !== null) {
+        shineTargets.forEach(el => el.classList.remove(CURSOR_BLOOM_SHINE_CLASS));
+        shineTargets.clear();
+        return;
+      }
+      syncBloomEdgeShine(layout, pending.x, pending.y, shineTargets);
+    };
+
+    /* Capture on window so the bloom still tracks over D3/SVG (zoom can swallow bubbling). */
+    const onPointerMove = (e: PointerEvent) => {
+      pending.x = e.clientX;
+      pending.y = e.clientY;
+      const layout = layoutRef.current;
+      if (layout) {
+        layout.style.setProperty('--cursor-x', `${e.clientX}px`);
+        layout.style.setProperty('--cursor-y', `${e.clientY}px`);
+      }
+      if (!raf) raf = requestAnimationFrame(flushShine);
+    };
+
+    window.addEventListener('pointermove', onPointerMove, { capture: true });
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove, { capture: true });
+      cancelAnimationFrame(raf);
+      shineTargets.forEach(el => el.classList.remove(CURSOR_BLOOM_SHINE_CLASS));
+      shineTargets.clear();
+    };
+  }, []);
+
   const nodesByType: Record<string, GraphNode[]> = {};
   NODES.forEach(n => {
     if (!nodesByType[n.type]) nodesByType[n.type] = [];
@@ -62,7 +117,8 @@ export default function Page() {
 
   return (
     <div
-      className={`wiki-layout theme-${theme}`}
+      ref={layoutRef}
+      className={`wiki-layout theme-${theme}${mainView === 'graph' ? ' wiki-layout--graph' : ''}`}
       style={{ '--font-scale': FONT_SCALES[fontIdx] } as React.CSSProperties}
     >
 
@@ -82,7 +138,7 @@ export default function Page() {
           <div className="wiki-logo-row">
             <div className="wiki-logo">
               <span className="wiki-logo-mdd">MDD</span>
-              <span className="wiki-logo-sep">//</span>
+              <span className="wiki-logo-sep">{'//'}</span>
               <span className="wiki-logo-name">Knowledge Base</span>
             </div>
             {mainView === 'article' && selectedNode && (

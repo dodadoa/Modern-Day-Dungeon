@@ -79,10 +79,6 @@ export default function KnowledgeGraph({ compact, onNodeSelect }: Props) {
     svg.call(zoom);
 
     const defs = svg.append('defs');
-    defs.append('filter')
-      .attr('id', 'deemphasis-blur')
-      .append('feGaussianBlur')
-      .attr('stdDeviation', 1.4);
 
     defs.append('marker')
       .attr('id', 'arr')
@@ -175,23 +171,20 @@ export default function KnowledgeGraph({ compact, onNodeSelect }: Props) {
 
     function pulse(id: string) {
       const nb = getNeighbors(id);
+      /* Opacity + color only — per-element feGaussianBlur was very costly while the sim moves nodes. */
       nodeEl.selectAll<SVGCircleElement, SimNode>('circle.node-bg')
         .attr('stroke', function () {
           const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? '#fff' : '#777';
+          return nb.has(d.id) ? '#fff' : '#666';
         })
         .attr('opacity', function () {
           const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? 1 : 0.58;
-        })
-        .attr('filter', function () {
-          const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? null : 'url(#deemphasis-blur)';
+          return nb.has(d.id) ? 1 : 0.48;
         });
       nodeEl.selectAll<SVGTextElement, SimNode>('text.node-lbl')
         .attr('fill', function () {
           const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? '#fff' : '#8a8a8a';
+          return nb.has(d.id) ? '#fff' : '#6e6e6e';
         })
         .attr('font-size', function () {
           const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
@@ -199,43 +192,32 @@ export default function KnowledgeGraph({ compact, onNodeSelect }: Props) {
         })
         .attr('opacity', function () {
           const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? 1 : 0.6;
-        })
-        .attr('filter', function () {
-          const d = d3.select<SVGGElement, SimNode>(this.parentNode as SVGGElement).datum();
-          return nb.has(d.id) ? null : 'url(#deemphasis-blur)';
+          return nb.has(d.id) ? 1 : 0.52;
         });
       linkEl
         .attr('stroke-opacity', d => {
           const s = d.source.id, t = d.target.id;
-          if (s === id || t === id) return 0.85;
-          return 0.32;
+          if (s === id || t === id) return 0.88;
+          return 0.26;
         })
         .attr('stroke-width', d => {
           const s = d.source.id, t = d.target.id;
           if (s === id || t === id) return 1.8;
           return d.w || 1;
-        })
-        .attr('filter', d => {
-          const s = d.source.id, t = d.target.id;
-          return s === id || t === id ? null : 'url(#deemphasis-blur)';
         });
     }
 
     function clearHighlight() {
       nodeEl.selectAll<SVGCircleElement, SimNode>('circle.node-bg')
         .attr('stroke', '#aaa')
-        .attr('opacity', 1)
-        .attr('filter', null);
+        .attr('opacity', 1);
       nodeEl.selectAll<SVGTextElement, SimNode>('text.node-lbl')
         .attr('fill', '#aaa')
         .attr('font-size', '10px')
-        .attr('opacity', 1)
-        .attr('filter', null);
+        .attr('opacity', 1);
       linkEl
         .attr('stroke-opacity', 0.5)
-        .attr('stroke-width', d => d.w || 1)
-        .attr('filter', null);
+        .attr('stroke-width', d => d.w || 1);
     }
 
     const tooltip = tooltipRef.current;

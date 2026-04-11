@@ -50,6 +50,11 @@ export const NODES: GraphNode[] = [
 
   // ── Realms ────────────────────────────────────────────────────────────────
 
+  { id:'core-sky',
+    label:'CORE (Sky)',
+    type:'realm', r:14,
+    desc:'Satellite constellations. Above everything. Owned, not navigable. STARWEAVE controls it. Useful and critical, yet capable of unilateral connectivity control.' },
+
   { id:'surface',
     label:'The Surface Kingdom',
     type:'realm', r:20,
@@ -69,11 +74,6 @@ export const NODES: GraphNode[] = [
     label:'The Subterranean',
     type:'realm', r:26,
     desc:'Protocol / Code Layer — The Foundation Layer. The infrastructure — the physical, material, unglamorous load-bearing reality that holds every other realm up. Dark. Wet. Full of moisture and moss. Cables draped across stone like the roots of a very old tree.' },
-
-  { id:'core-sky',
-    label:'CORE (Sky)',
-    type:'realm', r:14,
-    desc:'Satellite constellations. Above everything. Owned, not navigable. STARWEAVE controls it. Useful and critical, yet capable of unilateral connectivity control.' },
 
   { id:'core-below',
     label:'CORE (Below)',

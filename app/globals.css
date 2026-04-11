@@ -22,6 +22,79 @@ body {
   height: 100vh;
   overflow: hidden;
   --font-scale: 1;
+  --cursor-x: 50vw;
+  --cursor-y: 50vh;
+  isolation: isolate;
+  position: relative;
+}
+
+/*
+ * Cursor-following light lives on .wiki-topbar + .wiki-body (not a ::before under them):
+ * `background-attachment: fixed` maps var(--cursor-x/y) from the layout to the viewport so
+ * the hotspot stays under the pointer. Child panes use transparent backgrounds so this shows through.
+ */
+.wiki-topbar,
+.wiki-body {
+  background-color: #000;
+  /* Tight hotspot + soft wide bloom — extra stops for a smoother falloff. */
+  background-image:
+    radial-gradient(
+      168px circle at var(--cursor-x) var(--cursor-y),
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(245, 251, 255, 0.095) 14%,
+      rgba(232, 246, 255, 0.065) 30%,
+      rgba(216, 236, 255, 0.04) 46%,
+      rgba(200, 224, 255, 0.022) 60%,
+      rgba(188, 214, 248, 0.012) 72%,
+      rgba(175, 205, 242, 0.004) 82%,
+      transparent 92%
+    ),
+    radial-gradient(
+      740px circle at var(--cursor-x) var(--cursor-y),
+      rgba(218, 242, 255, 0.048) 0%,
+      rgba(200, 230, 255, 0.038) 12%,
+      rgba(182, 218, 252, 0.028) 26%,
+      rgba(162, 204, 246, 0.02) 40%,
+      rgba(140, 188, 238, 0.013) 54%,
+      rgba(118, 172, 228, 0.009) 66%,
+      rgba(95, 155, 215, 0.005) 76%,
+      rgba(70, 135, 198, 0.0022) 85%,
+      transparent 94%
+    );
+  background-attachment: fixed, fixed;
+  background-repeat: no-repeat, no-repeat;
+}
+
+/*
+ * Graph view: one gradient layer only — same vibe, half the fullscreen background compositing
+ * cost while D3 runs the simulation + zoom.
+ */
+.wiki-layout--graph .wiki-topbar,
+.wiki-layout--graph .wiki-body {
+  background-image: radial-gradient(
+    640px circle at var(--cursor-x) var(--cursor-y),
+    rgba(255, 255, 255, 0.11) 0%,
+    rgba(240, 249, 255, 0.08) 10%,
+    rgba(225, 242, 255, 0.058) 22%,
+    rgba(205, 230, 255, 0.04) 36%,
+    rgba(182, 215, 252, 0.026) 50%,
+    rgba(155, 198, 240, 0.016) 64%,
+    rgba(125, 178, 225, 0.009) 76%,
+    rgba(95, 155, 208, 0.004) 86%,
+    transparent 94%
+  );
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Bloom edge reflection: realm stack plates only (see cursorBloomShine.ts). */
+.wiki-layout .wiki-stack-plate.cursor-bloom-shine {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 0 34px rgba(195, 235, 255, 0.32),
+    0 0 64px rgba(160, 210, 255, 0.13) !important;
 }
 
 /* Theme switch: keep dark as default and invert for white mode */
@@ -33,7 +106,6 @@ body {
 .wiki-topbar {
   height: 44px;
   flex-shrink: 0;
-  background: #000;
   border-bottom: 1px solid #444;
   display: grid;
   grid-template-columns: minmax(40px, 1fr) minmax(0, 2.2fr) minmax(40px, 1fr);
@@ -205,6 +277,8 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+  z-index: 2;
 }
 
 /* ─── Sidebar ──────────────────────────────────────────── */
@@ -213,7 +287,7 @@ body {
   width: 280px;
   min-width: 280px;
   flex-shrink: 0;
-  background: #000;
+  background: transparent;
   border-right: 1px solid #444;
   display: flex;
   flex-direction: column;
@@ -289,7 +363,7 @@ body {
   flex: 1;
   overflow-y: auto;
   min-width: 0;
-  background: #000;
+  background: transparent;
 }
 .wiki-main:not(.wiki-main--graph) {
   display: flex;
@@ -859,7 +933,7 @@ body {
   position: relative;
   overflow: hidden;
   user-select: none;
-  background: #000;
+  background: transparent;
 }
 
 .graph-svg {
