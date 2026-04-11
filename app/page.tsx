@@ -30,7 +30,7 @@ const TYPE_CODES: Record<string, string> = {
   creature:  '[C]',
 };
 
-const FONT_SCALES = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35];
+const FONT_SCALES = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5, 1.75, 2.0];
 const DEFAULT_FONT_IDX = 3;
 
 export default function Page() {

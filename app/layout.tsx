@@ -1,17 +1,25 @@
 import type { Metadata } from "next";
-import { Share_Tech_Mono, Cinzel } from "next/font/google";
+import { Share_Tech_Mono, Cormorant_Garamond, EB_Garamond } from "next/font/google";
 import "./globals.css";
 
 const shareTechMono = Share_Tech_Mono({
   weight: "400",
   subsets: ["latin"],
-  variable: "--font-share-tech-mono",
+  variable: "--font-mono",
 });
 
-const cinzel = Cinzel({
-  weight: ["400", "600"],
+const cormorant = Cormorant_Garamond({
+  weight: ["300", "400", "600"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
-  variable: "--font-cinzel",
+  variable: "--font-display",
+});
+
+const ebGaramond = EB_Garamond({
+  weight: ["400", "500"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${shareTechMono.variable} ${cinzel.variable}`}>
+    <html lang="en" className={`${shareTechMono.variable} ${cormorant.variable} ${ebGaramond.variable}`}>
       <body>{children}</body>
     </html>
   );

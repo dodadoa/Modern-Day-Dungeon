@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { GraphNode, NODES, LINKS } from '../data/graph';
 
 interface Props {
@@ -87,7 +86,6 @@ function buildSectorDiagramText(
 }
 
 export default function WikiArticle({ node, onNodeSelect }: Props) {
-  const [expandedStackType, setExpandedStackType] = useState<string | null>(null);
 
   if (!node) {
     const nodesByType: Record<string, GraphNode[]> = {};
@@ -117,72 +115,20 @@ export default function WikiArticle({ node, onNodeSelect }: Props) {
           <span className="wiki-home-stat wiki-home-stat--status">▸ STATUS: ACTIVE</span>
         </div>
 
-        <div className="wiki-stack-menu" role="navigation" aria-label="Entity sectors">
-          {Object.entries(nodesByType).map(([type, sectorNodes]) => {
-            const expanded = expandedStackType === type;
-            const panelId = `wiki-stack-panel-${type}`;
-            return (
-              <div
-                key={type}
-                className={`wiki-stack-block${expanded ? ' is-expanded' : ''}`}
-              >
-                <button
-                  type="button"
-                  className="wiki-stack-plate"
-                  aria-expanded={expanded}
-                  aria-controls={panelId}
-                  id={`wiki-stack-trigger-${type}`}
-                  onClick={() =>
-                    setExpandedStackType(prev => (prev === type ? null : type))
-                  }
-                >
-                  <span className="wiki-stack-bracket wiki-stack-bracket--l" aria-hidden>╱</span>
-                  <span className="wiki-stack-code">{TYPE_CODES[type]}</span>
-                  <span className="wiki-stack-name">{TYPE_LABELS[type] || type}</span>
-                  <span className="wiki-stack-count">{String(sectorNodes.length).padStart(2, '0')}</span>
-                  <span className="wiki-stack-toggle" aria-hidden>
-                    {expanded ? '[ collapse ]' : '[ expand ]'}
-                  </span>
-                  <span className="wiki-stack-bracket wiki-stack-bracket--r" aria-hidden>╲</span>
-                </button>
-
-                <div
-                  id={panelId}
-                  className="wiki-stack-collapse"
-                  aria-hidden={!expanded}
-                >
-                  {expanded ? (
-                    <div
-                      className="wiki-stack-collapse-inner"
-                      role="region"
-                      aria-labelledby={`wiki-stack-trigger-${type}`}
-                    >
-                      <div className="wiki-stack-diagram">
-                        <div className="wiki-stack-diagram-glow" />
-                        <pre className="wiki-stack-diagram-pre">{buildSectorDiagramText(type, sectorNodes)}</pre>
-                        <div className="wiki-stack-diagram-actions">
-                          {sectorNodes.map(n => (
-                            <button
-                              key={n.id}
-                              type="button"
-                              className="wiki-stack-entity-btn"
-                              onClick={e => {
-                                e.stopPropagation();
-                                onNodeSelect(n);
-                              }}
-                            >
-                              <span className="wiki-stack-entity-code">{TYPE_CODES[n.type]}</span>
-                              {n.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
+        <div className="wiki-stack-menu" role="navigation" aria-label="Realms">
+          {(nodesByType['realm'] ?? []).map(n => (
+            <button
+              key={n.id}
+              type="button"
+              className="wiki-stack-plate"
+              onClick={() => onNodeSelect(n)}
+            >
+              <span className="wiki-stack-bracket wiki-stack-bracket--l" aria-hidden>╱</span>
+              <span className="wiki-stack-code">{TYPE_CODES[n.type]}</span>
+              <span className="wiki-stack-name">{n.label}</span>
+              <span className="wiki-stack-bracket wiki-stack-bracket--r" aria-hidden>╲</span>
+            </button>
+          ))}
         </div>
       </div>
     );
