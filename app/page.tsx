@@ -34,22 +34,24 @@ const TYPE_CODES: Record<string, string> = {
 const FONT_SCALES = [0.8, 0.9, 1.0, 1.1, 1.2, 1.35, 1.5, 1.75, 2.0];
 const DEFAULT_FONT_IDX = 3;
 
+type HistoryEntry = { node: GraphNode | null; view: MainView };
+
 export default function Page() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [mainView, setMainView] = useState<MainView>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [fontIdx, setFontIdx] = useState(DEFAULT_FONT_IDX);
-  const [theme, setTheme] = useState<ThemeMode>('dark');
+  const [theme, setTheme] = useState<ThemeMode>('light');
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   const layoutRef = useRef<HTMLDivElement>(null);
   const bloomShineTargetsRef = useRef(new Set<Element>());
   const mainViewRef = useRef<MainView>(mainView);
   const selectedNodeRef = useRef<GraphNode | null>(selectedNode);
-
   useEffect(() => {
     mainViewRef.current = mainView;
     selectedNodeRef.current = selectedNode;
-    /* Realm stack (edge reflect) only on index — clear when leaving. */
+    /* Clear shine when leaving home. */
     if (mainView === 'graph' || selectedNode !== null) {
       bloomShineTargetsRef.current.forEach(el => el.classList.remove(CURSOR_BLOOM_SHINE_CLASS));
       bloomShineTargetsRef.current.clear();
@@ -65,7 +67,7 @@ export default function Page() {
       raf = 0;
       const layout = layoutRef.current;
       if (!layout) return;
-      /* Graph: skip elementsFromPoint. Article: no realm stack mounted. */
+      /* Skip on graph/article where no plates are mounted. */
       if (mainViewRef.current === 'graph' || selectedNodeRef.current !== null) {
         shineTargets.forEach(el => el.classList.remove(CURSOR_BLOOM_SHINE_CLASS));
         shineTargets.clear();
@@ -101,18 +103,33 @@ export default function Page() {
     nodesByType[n.type].push(n);
   });
 
+  const pushHistory = (node: GraphNode | null, view: MainView) => {
+    setHistory(h => [...h, { node, view }]);
+  };
+
   const handleNodeSelect = (node: GraphNode | null) => {
+    pushHistory(selectedNode, mainView);
     setSelectedNode(node);
     setMainView(node ? 'article' : 'home');
   };
 
   const handleHome = () => {
+    pushHistory(selectedNode, mainView);
     setSelectedNode(null);
     setMainView('home');
   };
 
   const handleGraph = () => {
+    pushHistory(selectedNode, mainView);
     setMainView('graph');
+  };
+
+  const handleBack = () => {
+    if (history.length === 0) return;
+    const prev = history[history.length - 1];
+    setHistory(h => h.slice(0, -1));
+    setSelectedNode(prev.node);
+    setMainView(prev.view);
   };
 
   return (
@@ -131,6 +148,14 @@ export default function Page() {
             title={sidebarOpen ? 'Hide sidebar' : 'Show sidebar'}
           >
             ☰
+          </button>
+          <button
+            className="wiki-back-btn"
+            onClick={handleBack}
+            disabled={history.length === 0}
+            title="Go back"
+          >
+            ←
           </button>
         </div>
 
@@ -169,9 +194,9 @@ export default function Page() {
             <button
               className={`wiki-theme-btn${theme === 'light' ? ' active' : ''}`}
               onClick={() => setTheme(t => (t === 'dark' ? 'light' : 'dark'))}
-              title={`Switch to ${theme === 'dark' ? 'white' : 'dark'} theme`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
             >
-              {theme === 'dark' ? 'white' : 'dark'}
+              {theme === 'dark' ? 'light' : 'dark'}
             </button>
           </div>
 
