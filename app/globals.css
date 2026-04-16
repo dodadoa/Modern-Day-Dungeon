@@ -28,6 +28,21 @@ body {
   position: relative;
 }
 
+/* Home-only ambient texture canvas (p5). */
+.wiki-home-atmo-p5 {
+  position: absolute;
+  inset: 44px 0 0 0;
+  pointer-events: none;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.wiki-home-atmo-p5 canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 /*
  * Cursor-following light lives on .wiki-topbar + .wiki-body (not a ::before under them):
  * `background-attachment: fixed` maps var(--cursor-x/y) from the layout to the viewport so
